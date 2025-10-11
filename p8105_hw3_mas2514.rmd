@@ -6,6 +6,7 @@ output: github_document
 
 ```{r setup, include=FALSE}
 library(tidyverse)
+library(p8105.datasets)
 
 knitr::opts_chunk$set(
   fig.width = 6,
@@ -23,3 +24,14 @@ options(
 scale_colour_discrete = scale_colour_viridis_d
 scale_fill_discrete = scale_fill_viridis_d
 ```
+
+## Problem 1
+
+__This code chunk loads the p8105 `instacart` data, which is a clean and limited version of The "Instacart Online Grocery Shopping Dataset 2017" and contains information about instacart online grocery orders__
+```{r}
+data("instacart")
+```
+
+The `instacart` data contains `r nrow(instacart)` observations and `r ncol(instacart)` variables and provides information on the instacart grocery orders of `r instacart |> summarize(n = n_distinct(user_id))` users with each row representing a product from an order. The `product_name` variable identifies the product ordered and the `aisle` variable indicates which aisle the ordered item came from. The dataset also includes the variables `add_to_cart_order`, which gives the sequence of products purchased in each order, and `reorder`, which indicates whether that item was ordered by the user in the past. The week and hour of day the order was placed is given by `order_dow` and `order_hour_of_day`, respectively. 
+
+There are a total of `r instacart |> summarize(n = n_distinct(aisle))` aisles and the three aisles with the most items ordered are `r instacart |> group_by(aisle) |> summarize(items_ordered = n()) |> arrange(desc(items_ordered)) |> slice_head(n = 3) |> pull(aisle) |> paste(collapse = ", ")` with `r instacart |> group_by(aisle) |> summarize(items_ordered = n()) |> arrange(desc(items_ordered)) |> slice_head(n = 3) |> pull(items_ordered) |> paste(collapse = ", ")` items ordered for each aisle, respectively.
