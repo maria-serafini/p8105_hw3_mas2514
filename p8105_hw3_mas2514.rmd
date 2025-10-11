@@ -57,3 +57,20 @@ instacart |>
 ```
 
 
+__This code creates a table showing the three most popular items in the aisles "baking ingredients", "dog food care", and "package vegetables fruits. We group by the aisle and product name and count the number of each product. We then arrange the item counts in descending order and take the top 3. Finally, we create a table displaying the results__
+```{r}
+instacart |> 
+  filter(aisle %in% c("baking ingredients", "dog food care", "packaged vegetables fruits")) |> 
+  group_by(aisle, product_name) |> 
+  summarize(
+    item_count = n(), .groups = "drop_last"
+  ) |> 
+  arrange(aisle, desc(item_count)) |> 
+  slice_head(n = 3) |>
+  knitr::kable(
+    col.names = c("Aisle", "Product", "Number of Times Ordered"),
+    caption = "Top 3 Most Ordered Items By Aisle"
+  )
+```
+
+This table shows that the top 3 most ordered items for the "baking ingredients" aisle were "Light Brown Sugar" with 499 orders, "Pure Baking Soda" with 387 orders, and "Cane Sugar" with 336 orders. The top 3 most ordered items for the "dog food care aisle" were "Snack Sticks Chicken & Rice Recipe Dog Treats" with 30 orders, "Organix Chicken & Brown Rice Recipe" with 28 orders, and "Small Dog Biscuits" with 26 orders. The top 3 ordered items for the "packages vegetables and fruits" aisle were "Organic Baby Spinach" with 9,784 orders, "Organic Raspberries" with 5,546 orders, and "Organic Blueberries" with 4,966 orders. 
