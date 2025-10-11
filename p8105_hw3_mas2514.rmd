@@ -115,3 +115,42 @@ instacart |>
   knitr::kable(digits = 2)
 ```
 
+
+## Problem 2
+
+__This chunk imports and cleans the Zillow NYC rental data and ZIP code data.__
+
+```{r}
+nyc_zori_df <-
+  read_csv("data/Zip_zori_uc_sfrcondomfr_sm_month_NYC.csv") |> 
+  pivot_longer(
+    -(RegionID:CountyName),
+    names_to = "month",
+    values_to = "price") |> 
+  janitor::clean_names() |> 
+  rename(zip_code = region_name) |> 
+  mutate(
+    month = as_date(month),
+    year = floor_date(month, unit = "year"),
+    zip_code = as.numeric(zip_code)) |> 
+  select(-county_name)
+
+zip_codes_df <-
+  read_csv("data/Zip Codes.csv") |> 
+  janitor::clean_names() |> 
+  filter(
+    !(zip_code == 10463 & county == "New York"),
+    !(zip_code == 11201 & county == "New York")) |> 
+  mutate(
+    borough = case_match(
+      county,
+      "Bronx" ~ "Bronx",
+      "Kings" ~ "Brooklyn",
+      "New York" ~ "Manhattan",
+      "Queens" ~ "Queens",
+      "Richmond" ~ "Staten Island"
+    )
+  ) |> 
+  select(zip_code, borough, neighborhood)
+```
+
