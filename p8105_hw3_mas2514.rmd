@@ -88,7 +88,7 @@ instacart |>
 #
 The table below shows the mean hour of the day each of the products, Coffee Ice Cream and Pink Lady Apples, were ordered for each day of the week. The earliest mean hour of the day Coffee Ice Cream was ordered was 12.26 on Friday and the latest mean hour was 15.38 on Tuesday. The earliest mean hour of the day Pink Lady Apples were ordered was 11.36 on Monday and the latest was 14.25 on Wednesday. Overall the mean hour of the day Pink lady Apples were ordered was earlier than the mean hour of the day Coffee Ice Cream was ordered for all days except Friday (12.78 vs 12.26, respectively). 
 
-```{r}
+```{r table_mean_hour}
 instacart |> 
   filter(product_name %in% c("Pink Lady Apples", "Coffee Ice Cream")) |> 
   mutate(
@@ -124,7 +124,7 @@ instacart |>
 
 __This chunk imports and cleans the Zillow NYC rental data and ZIP code data.__
 
-```{r}
+```{r load_zillow_zip_data}
 nyc_zori_df <-
   read_csv("data/Zip_zori_uc_sfrcondomfr_sm_month_NYC.csv") |> 
   pivot_longer(
@@ -166,7 +166,7 @@ There are `r nyc_rental_df |> group_by(zip_code) |> summarize(zipcode_count = su
 # 
 The table below shows the mean rental price in each borough of NYC by year. 
 
-```{r}
+```{r table_mean_rent_price}
 nyc_rental_df |> 
   group_by(borough, year) |> 
   summarize(mean_price = mean(price, na.rm = TRUE), .groups = "drop") |> 
@@ -183,8 +183,9 @@ nyc_rental_df |>
 # 
 The plot below shows NYC rental prices within each ZIP code by available year and separated by borough with each line representing a ZIP code within each respective borough. Looking at the plot, we can see that Manhattan and Brooklyn rental prices were fairly stable across ZIP codes through 2020, with a significant decrease in prices between 2020 and 2021 and a significant increase bwtween 2021 and 2022. This noticable dip represents the decrease in rental prices following the COVID-19 pandemic as residents temporarily and permanantly left the city and the demand for rentals decreased, followed by the increased demand for rentals following the end of COVID-19 lockdowns. From 2022 to 2024, rental prices in Manhattan and Brooklyn have steadily increased. Rental prices in the Bronx and Queens have remained fairly stable with a slight increasing trend across years.Staten Island rental prices also appear to be mostly consistent across ZIP Codes and steadily increasing year-to-year. It is notable that Staten Island did not have any data on rental prices prior to 2020, suggesting a growing rental market in this borough.     
 
-```{r}
-nyc_yearly_rental_plot <- nyc_rental_df |> 
+```{r nyc_yearly_rental_plot}
+nyc_yearly_rental_plot <- 
+  nyc_rental_df |> 
   select(zip_code, price, month, year, borough) |> 
   mutate(
     zip_code = as.factor(zip_code)
@@ -192,7 +193,6 @@ nyc_yearly_rental_plot <- nyc_rental_df |>
   drop_na() |> 
   ggplot(aes(x = month, y = price, group = zip_code, color = zip_code)) +
   geom_line(alpha = 0.5, linewidth = 0.4) +
-  #geom_smooth(aes(group = borough), se = FALSE) +
   theme(legend.position = "none") +
   facet_wrap(~borough, ncol = 2) +
   labs(
@@ -207,8 +207,9 @@ print(nyc_yearly_rental_plot)
 # 
 The plot below shows the distribution of the average monthly ZIP code-level rental prices across the boroughs of NYC in 2023. Looking at the plot, we can see that Manhattan has the highest rental prices and widest spread indicating large variability in prices between ZIP codes. Brooklyn's average monthly rental prices are lower when compared to Manhattan, but still show moderate variability between ZIP codes. Bronx, Queens, and Staten Island have the lowest average rental prices and less spread, suggesting similar and generally more affordable rental prices across ZIP codes. However, Queens has a number of outlying ZIP codes with much higher rental prices than the average for the borough, indicating that number of ZIP codes in this borough are significantly more expensive for renters. 
 
-```{r}
-nyc_rental_2023_plot <- nyc_rental_df |> 
+```{r nyc_rental_2023_plot}
+nyc_rental_2023_plot <- 
+  nyc_rental_df |> 
   filter(year %in% "2023-01-01") |> 
   select(zip_code, price, month, year, borough) |> 
   group_by(borough, zip_code, month) |> 
@@ -232,7 +233,7 @@ print(nyc_rental_2023_plot)
 
 __This code chunk combines the `nyc_yearly_rental_plot` and `nyc_rental_2023_plot` above using patchwork__
 
-```{r, fig.width= 10}
+```{r combine_plots, fig.width= 10}
 nyc_yearly_rental_plot + nyc_rental_2023_plot
 ```
 
@@ -241,7 +242,7 @@ nyc_yearly_rental_plot + nyc_rental_2023_plot
 
 __This chunk loads, cleans, and merges the demographic and accelerometer data of 250 participants in the National Health and Nutrition Examination Survey (NHANES). The demographic data is filtered to exclude participants less than 21 year old and participants with missing demographic data; we also encode the education variable as a factor variable in order of increasing education level. The accelerometer data is converted to long format and we created 'minute of the day' and mims value  variables; we also encode the minute of day variable as a factor variable in ascending order of minutes of the day over 24 hours. We then join the two datasets using the participant's respondent sequence number__
 
-```{r}
+```{r load_nhanes_data}
 nhanes_demo_df <- 
   read_csv("data/nhanes_covar.csv", skip = 4, na = c("NA", "")) |> 
   janitor::clean_names() |> 
@@ -254,7 +255,7 @@ nhanes_demo_df <-
    education = factor(
      education, 
      levels = c(1, 2, 3), 
-     labels = c("less than high school", "high school equivalent", "more than high school")
+     labels = c("Less than high school", "High school equivalent", "More than high school")
      )
    ) |> 
   drop_na()
@@ -275,5 +276,49 @@ nhanes_accel_df <-
 
 nhanes_df <-
   left_join(nhanes_demo_df, nhanes_accel_df, by = "seqn")
+```
+
+
+The table below shows the number of male and female participants from the sample who are in each education group. From the table, we can observe that the majority of participants of both sexes have a level of education more than high school.  
+
+```{r table_education_sex}
+nhanes_df |> 
+  select(seqn, sex, education) |> 
+  group_by(sex, education) |> 
+  summarize(
+    count_sex = n_distinct(seqn)
+  ) |> 
+  pivot_wider(
+    names_from = sex, 
+    values_from = count_sex
+  ) |> 
+  rename(
+    "Education Level" = education,
+    "Female (n)" = female, 
+    "Male (n)" = male
+  ) |> 
+  knitr::kable()
+```
+
+
+The plot below show the age distribution of male and female participants across education levels. From this distribution, we can see there is large variability in age for both males and females across education levels. 
+
+```{r plot_age_dist}
+nhanes_df |> 
+  select(sex, education, age) |> 
+  drop_na() |> 
+  ggplot(aes(x = sex, y = age, fill = education)) +
+  geom_violin(alpha = 0.5) +
+  labs(
+    title = "Age Distribution of Female and Male Participants By Education Level",
+    x = "Sex",
+    y = "Age", 
+    fill = "Education Level"
+  ) +
+  scale_y_continuous(
+    limits = c(0,90)
+  ) +
+  theme_minimal() +
+  theme(legend.position = "bottom")
 ```
 
