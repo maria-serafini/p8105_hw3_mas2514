@@ -161,7 +161,7 @@ nyc_rental_df =
 
 There are `r nyc_rental_df |> group_by(zip_code) |> summarize(zipcode_count = sum(!is.na(price)), .groups = "drop") |> filter(zipcode_count == 116) |> nrow()` zip codes observed in all 116 months between January 2015 and August 2024 and  `r nyc_rental_df |> group_by(zip_code) |> summarize(zipcode_count = sum(!is.na(price)), .groups = "drop") |> filter(zipcode_count < 10) |> nrow()` zip codes observed in fewer than 10 of the months. The zip codes that appear in every month, such as 10001 and 10014 are areas of NYC with consistent rental markets (add details) 
 
-#
+# 
 The table below shows the mean rental price in each borough of NYC by year. 
 
 ```{r}
@@ -178,8 +178,8 @@ nyc_rental_df |>
 ```
 
 
-#
-The plot below shows NYC rental prices within each ZIP code by available year and separated by borough. For Manhattan and Brooklyn rental prices were fairly stable until 2021, where there is a noticeable decrease in rental prices before a steady increase through 2024. This noticable dip represents the decrease in rental prices following the COVID-19 pandemic as residents moved out of the city and the demand for commercial/office rental space decreased.  
+# 
+The plot below shows NYC rental prices within each ZIP code by available year and separated by borough with each line representing a ZIP code within each respective borough. Looking at the plot, we can see that Manhattan and Brooklyn rental prices were fairly stable across ZIP codes through 2020, with a significant decrease in prices between 2020 and 2021 and a significant increase bwtween 2021 and 2022. This noticable dip represents the decrease in rental prices following the COVID-19 pandemic as residents temporarily and permanantly left the city and the demand for rentals decreased, followed by the increased demand for rentals following the end of COVID-19 lockdowns. From 2022 to 2024, rental prices in Manhattan and Brooklyn have steadily increased. Rental prices in the Bronx and Queens have remained fairly stable with a slight increasing trend across years.Staten Island rental prices also appear to be mostly consistent across ZIP Codes and steadily increasing year-to-year. It is notable that Staten Island did not have any data on rental prices prior to 2020, suggesting a growing rental market in this borough.     
 
 ```{r}
 nyc_rental_df |> 
@@ -198,3 +198,27 @@ nyc_rental_df |>
     x = "Year",
     y = "Rental Price (Dollars)")
 ```
+
+
+# 
+The plot below shows the distribution of the average monthly ZIP code-level rental prices across the boroughs of NYC in 2023. Looking at the plot, we can see that Manhattan has the highest rental prices and widest spread indicating large variability in prices between ZIP codes. Brooklyn's average monthly rental prices are lower when compared to Manhattan, but still show moderate variability between ZIP codes. Bronx, Queens, and Staten Island have the lowest average rental prices and less spread, suggesting similar and generally more affordable rental prices across ZIP codes. However, Queens has a number of outlying ZIP codes with much higher rental prices than the average for the borough, indicating that number of ZIP codes in this borough are significantly more expensive for renters. 
+```{r}
+nyc_rental_df |> 
+  filter(year %in% "2023-01-01") |> 
+  select(zip_code, price, month, year, borough) |> 
+  group_by(borough, zip_code, month) |> 
+  summarize(
+    mean_price = mean(price, na.rm = TRUE), .groups = "drop"
+  ) |> 
+  drop_na() |> 
+  ggplot(aes(x = borough, y = mean_price, fill = borough))+
+  geom_violin(alpha = 0.5, trim = FALSE) +
+  geom_boxplot(alpha = 0.5, outlier.shape = 1.0) +
+  labs(
+    title = "Distribution of Average Monthly ZIP Code-level Rental Prices Across NYC",
+    x = "Borough", 
+    y = "Average Monthly Rental Price (Dollars)"
+  ) +
+  theme(legend.position = "none")
+```
+
