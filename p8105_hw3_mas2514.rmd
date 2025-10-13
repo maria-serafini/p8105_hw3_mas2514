@@ -1,5 +1,5 @@
 ---
-title: "p8105 Homework 3"
+title: "P8105 Homework 3"
 author: "Maria Serafini"
 output: github_document
 ---
@@ -13,7 +13,9 @@ knitr::opts_chunk$set(
   fig.width = 8,
   fig.height = 5,
   fig.asp = .6,
-  out.width = "90%"
+  out.width = "90%", 
+  collapse = TRUE, 
+  messgae = FALSE
   )
 
 theme_set(theme_minimal() + theme(legend.position = "bottom"))
@@ -23,8 +25,8 @@ options(
   ggplot2.continuous.fill = "viridis"
   )
 
-scale_colour_discrete = scale_colour_viridis_d
-scale_fill_discrete = scale_fill_viridis_d
+scale_colour_discrete = scale_colour_viridis_d(option = "magma")
+scale_fill_discrete = scale_fill_viridis_d(option = "magma")
 ```
 
 ## Problem 1
@@ -39,7 +41,7 @@ The `instacart` data contains `r nrow(instacart)` observations and `r ncol(insta
 
 There are a total of `r instacart |> summarize(n = n_distinct(aisle))` aisles and the three aisles with the most items ordered are `r instacart |> group_by(aisle) |> summarize(items_ordered = n()) |> arrange(desc(items_ordered)) |> slice_head(n = 3) |> pull(aisle) |> paste(collapse = ", ")` with `r instacart |> group_by(aisle) |> summarize(items_ordered = n()) |> arrange(desc(items_ordered)) |> slice_head(n = 3) |> pull(items_ordered) |> paste(collapse = ", ")` items ordered for each aisle, respectively.
 
-
+#
 __This code chunk creates a plot of the number of items ordered per aisle. We group by aisle and count the number of items ordered per aisle, filtering to only include aisles with 10,000 or more items ordered. We then create a plot to visualize the number of items ordered per aisle with the aisles arranged from most to least number of items ordered. We remove the legend for clarity and add labels for readability__
 
 ```{r plot_orders_by_aisle, fig.width = 10}
@@ -124,7 +126,7 @@ instacart |>
 
 __This chunk imports and cleans the Zillow NYC rental data and ZIP code data.__
 
-```{r load_zillow_zip_data}
+```{r load_zillow_zip_data, message = FALSE}
 nyc_zori_df <-
   read_csv("data/Zip_zori_uc_sfrcondomfr_sm_month_NYC.csv") |> 
   pivot_longer(
@@ -230,10 +232,10 @@ nyc_rental_2023_plot <-
 print(nyc_rental_2023_plot)
 ```
 
-
+#
 __This code chunk combines the `nyc_yearly_rental_plot` and `nyc_rental_2023_plot` above using patchwork__
 
-```{r combine_plots, fig.width= 10}
+```{r combined_rental_plots, fig.width= 10}
 nyc_yearly_rental_plot + nyc_rental_2023_plot
 ```
 
@@ -242,7 +244,7 @@ nyc_yearly_rental_plot + nyc_rental_2023_plot
 
 __This chunk loads, cleans, and merges the demographic and accelerometer data of 250 participants in the National Health and Nutrition Examination Survey (NHANES). The demographic data is filtered to exclude participants less than 21 year old and participants with missing demographic data; we also encode the education variable as a factor variable in order of increasing education level. The accelerometer data is converted to long format and we created 'minute of the day' and mims value  variables; we also encode the minute of day variable as a factor variable in ascending order of minutes of the day over 24 hours. We then join the two datasets using the participant's respondent sequence number__
 
-```{r load_nhanes_data}
+```{r load_nhanes_data, message = FALSE}
 nhanes_demo_df <- 
   read_csv("data/nhanes_covar.csv", skip = 4, na = c("NA", "")) |> 
   janitor::clean_names() |> 
@@ -278,7 +280,7 @@ nhanes_df <-
   left_join(nhanes_demo_df, nhanes_accel_df, by = "seqn")
 ```
 
-
+#
 The table below shows the number of male and female participants from the sample who are in each education group. From the table, we can observe that the majority of participants of both sexes have a level of education more than high school.  
 
 ```{r table_education_sex}
@@ -286,7 +288,7 @@ nhanes_df |>
   select(seqn, sex, education) |> 
   group_by(sex, education) |> 
   summarize(
-    count_sex = n_distinct(seqn)
+    count_sex = n_distinct(seqn), .groups = "drop"
   ) |> 
   pivot_wider(
     names_from = sex, 
@@ -300,7 +302,7 @@ nhanes_df |>
   knitr::kable()
 ```
 
-
+#
 The plot below show the age distribution of male and female participants across education levels. From this distribution, we can see there is large variability in age for both males and females across education levels. 
 
 ```{r plot_age_dist}
@@ -317,8 +319,26 @@ nhanes_df |>
   ) +
   scale_y_continuous(
     limits = c(0,90)
-  ) +
-  theme_minimal() +
-  theme(legend.position = "bottom")
+  )
+```
+
+# 
+The plot below shows total activity (aggregated mims data) for each participant by age with colors representing male and female and separated by education level
+
+```{r plot_total_activity}
+nhanes_df |> 
+  group_by(seqn) |> 
+  mutate(
+    total_activity = sum(mims_value),
+  ) |> 
+  ggplot(aes(x = age, y = total_activity, color = sex)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth() +
+  facet_wrap(education~.) +
+  labs(
+    title = "Total Activity By Age Between Females and Males of Different Education Levels",
+    x = "Age",
+    y = "Total Activity (Aggregate MIMS)"
+  )
 ```
 
